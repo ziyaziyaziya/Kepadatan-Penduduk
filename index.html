@@ -838,7 +838,7 @@
   }
 
   // =========================
-  // 6) LOAD DATA (kecamatan)
+  // 6) LOAD DATA (kecamatan)  ✅ SUDAH DIPERBARUI
   // =========================
   async function loadData(){
     document.getElementById('loading').style.display = 'block';
@@ -847,11 +847,15 @@
     // const kabkota = await safeFetch('data/KabKota.geojson');
     // if (kabkota) L.geoJSON(kabkota, {style:{color:'var(--primary-theme)',weight:2,fillOpacity:0}}).addTo(adminLvl1);
 
-    const kabKec  = await safeFetch('data/Kabupaten_Kecamatan.json');
-    const kotaKec = await safeFetch('data/Kota_Kecamatan.json');
+    // ✅ Path disesuaikan dengan repo GitHub kamu:
+    // folder: Geojson/
+    // file:   Kabupaten_Kecamatan.GeoJSON & Kota_Kecamatan.GeoJSON
+    const kabKec  = await safeFetch('Geojson/Kabupaten_Kecamatan.GeoJSON');
+    const kotaKec = await safeFetch('Geojson/Kota_Kecamatan.GeoJSON');
 
     if (!kabKec && !kotaKec){
-      document.getElementById('loading').innerHTML = "Gagal memuat GeoJSON. Pastikan file ada di folder data/ dan jalankan via Live Server.";
+      document.getElementById('loading').innerHTML =
+        "Gagal memuat GeoJSON. Pastikan file ada di folder <b>Geojson/</b> (case-sensitive) dan akses via GitHub Pages / Live Server.";
       return;
     }
 
@@ -1214,4 +1218,6 @@
 </script>
 </body>
 </html>
+
+
 
