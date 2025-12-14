@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <title>WebGIS Kepadatan Penduduk (Kota vs Kabupaten Bandung • Tema Merah)</title>
+  <title>WebGIS Kepadatan Penduduk (Kota vs Kabupaten Bandung • Tema Oranye)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -11,8 +11,8 @@
 
   <style>
     :root{
-      --primary-theme:#D32F2F;
-      --primary-dark:#B71C1C;
+      --primary-theme:#FB8C00;
+      --primary-dark:#EF6C00;
       --header-height:60px;
       --panel-width:360px;
       --bg-light:#f5f7fa;
@@ -24,7 +24,6 @@
       overflow:hidden; background:var(--bg-light);
     }
 
-    /* HEADER */
     .app-header{
       height:var(--header-height);
       background-color:var(--primary-theme);
@@ -64,7 +63,6 @@
       box-shadow:inset 0 2px 4px rgba(0,0,0,0.1);
     }
 
-    /* CONTAINER */
     .main-container{
       position:relative;
       height:calc(100vh - var(--header-height));
@@ -95,7 +93,6 @@
       line-height: 1.4;
     }
 
-    /* SIDEBAR (KANAN) */
     .right-sidebar{
       width:var(--panel-width);
       background:white;
@@ -124,15 +121,15 @@
       padding-bottom:20px;
     }
     .layer-group-header{
-      background:#ffebee;
+      background:#fff3e0;
       padding:12px 20px;
       font-size:12px;
       font-weight:700;
       color:var(--primary-dark);
       text-transform:uppercase;
       letter-spacing:0.5px;
-      border-bottom:1px solid #ffcdd2;
-      border-top:1px solid #ffcdd2;
+      border-bottom:1px solid #ffe0b2;
+      border-top:1px solid #ffe0b2;
     }
     .layer-item{
       background:white;
@@ -157,12 +154,7 @@
       accent-color:var(--primary-theme);
       cursor:pointer;
     }
-    .sub-layer{
-      padding-left: 28px;
-      background: #fff;
-    }
 
-    /* ANALYSIS */
     .analysis-card{
       background:white;
       padding:20px;
@@ -199,8 +191,8 @@
       display:none;
       margin-top:15px;
       padding:15px;
-      background:#ffebee;
-      border:1px solid #ffcdd2;
+      background:#fff3e0;
+      border:1px solid #ffe0b2;
       border-radius:8px;
       font-size:13px;
       line-height:1.5;
@@ -229,7 +221,6 @@
     }
     .stats-table tr:hover td{ background:#fafafa; cursor:pointer; }
 
-    /* FLOATING LEFT */
     .floating-left{
       position:absolute;
       top:20px;
@@ -325,11 +316,10 @@
       gap:12px;
     }
     .basemap-option:hover{
-      background:#ffebee;
+      background:#fff3e0;
       color:var(--primary-theme);
     }
 
-    /* MODALS */
     .modal-overlay{
       position:fixed;
       top:0; left:0;
@@ -407,7 +397,6 @@
       gap:8px;
     }
 
-    /* COORD */
     .leaflet-control-coordinates{
       background:rgba(255,255,255,0.95);
       padding:6px 12px;
@@ -421,7 +410,6 @@
       margin-bottom:5px;
     }
 
-    /* LABELS */
     .distance-label{
       background:white;
       border:1px solid var(--primary-theme);
@@ -444,7 +432,6 @@
       white-space:nowrap;
     }
 
-    /* LEGEND */
     .legend-box{
       background:rgba(255,255,255,0.95);
       padding:10px 12px;
@@ -460,7 +447,6 @@
     @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
     @keyframes slideDown{ from{transform:translateY(-30px);opacity:0} to{transform:translateY(0);opacity:1} }
 
-    /* PRINT */
     @media print{
       @page{ margin:0; }
       body{ background:white; -webkit-print-color-adjust:exact; }
@@ -507,16 +493,13 @@
       </div>
       <div class="modal-body">
         <h3 style="margin-top:0; color:var(--primary-theme); font-size:16px;">WebGIS Kepadatan Penduduk</h3>
-        <p>Aplikasi ini menampilkan choropleth kepadatan penduduk per kecamatan (jiwa/km²).</p>
-        <p><b>Fitur Utama:</b></p>
+        <p>Aplikasi ini menampilkan choropleth dan heatmap kepadatan penduduk per kecamatan (jiwa/km²).</p>
         <ul style="padding-left:20px; color:#555">
           <li>Administrasi: Kota Bandung & Kabupaten Bandung.</li>
-          <li>Choropleth kepadatan (Penduduk dari atribut <b>Penduduk</b>, luas dari geometri).</li>
+          <li>Choropleth kepadatan.</li>
+          <li>Heatmap: Kota, Kabupaten, Gabungan.</li>
           <li>Label kecamatan & label jumlah penduduk dipisah Kota/Kabupaten.</li>
-          <li>Search kecamatan.</li>
-          <li>Buffer: Kota, Kabupaten, Gabungan.</li>
-          <li>Analisis: tabel, top 10 terpadat, ringkasan.</li>
-          <li>Ukur jarak & print.</li>
+          <li>Search kecamatan, ukur jarak, print.</li>
         </ul>
       </div>
       <div class="modal-footer">
@@ -544,7 +527,7 @@
             <option value="portrait">A4 Portrait</option>
           </select>
         </div>
-        <div style="background:#ffebee; padding:10px; border-radius:6px; font-size:12px; color:var(--primary-dark); margin-top:10px;">
+        <div style="background:#fff3e0; padding:10px; border-radius:6px; font-size:12px; color:var(--primary-dark); margin-top:10px;">
           <i class="fa-solid fa-circle-info"></i>
           <b>Tips:</b> Pada dialog print browser pilih <b>"Save as PDF"</b>.
         </div>
@@ -607,7 +590,6 @@
 
         <div class="layer-group-header">Kepadatan Penduduk</div>
 
-        <!-- Choropleth -->
         <div class="layer-item">
           <label class="layer-left">
             <input type="checkbox" id="chkChoroKota" checked onchange="toggleLayer('choroKota')">
@@ -622,7 +604,27 @@
           </label>
         </div>
 
-        <!-- Label Kecamatan -->
+        <div class="layer-item">
+          <label class="layer-left">
+            <input type="checkbox" id="chkHeatKota" onchange="toggleLayer('heatKota')">
+            <span>Heatmap • Kota Bandung</span>
+          </label>
+        </div>
+
+        <div class="layer-item">
+          <label class="layer-left">
+            <input type="checkbox" id="chkHeatKab" onchange="toggleLayer('heatKab')">
+            <span>Heatmap • Kabupaten Bandung</span>
+          </label>
+        </div>
+
+        <div class="layer-item">
+          <label class="layer-left">
+            <input type="checkbox" id="chkHeatAll" checked onchange="toggleLayer('heatAll')">
+            <span>Heatmap • Gabungan</span>
+          </label>
+        </div>
+
         <div class="layer-item">
           <label class="layer-left">
             <input type="checkbox" id="chkLabelKecKota" checked onchange="toggleLayer('labelKecKota')">
@@ -637,7 +639,6 @@
           </label>
         </div>
 
-        <!-- Label Penduduk -->
         <div class="layer-item">
           <label class="layer-left">
             <input type="checkbox" id="chkLabelPopKota" checked onchange="toggleLayer('labelPopKota')">
@@ -651,29 +652,6 @@
             <span>Label Jumlah Penduduk • Kabupaten</span>
           </label>
         </div>
-
-        <!-- Buffer -->
-        <div class="layer-item">
-          <label class="layer-left">
-            <input type="checkbox" id="chkBufferKota" onchange="toggleLayer('bufferKota')">
-            <span>Buffer • Kota Bandung</span>
-          </label>
-        </div>
-
-        <div class="layer-item">
-          <label class="layer-left">
-            <input type="checkbox" id="chkBufferKab" onchange="toggleLayer('bufferKab')">
-            <span>Buffer • Kabupaten Bandung</span>
-          </label>
-        </div>
-
-        <div class="layer-item">
-          <label class="layer-left">
-            <input type="checkbox" id="chkBufferAll" checked onchange="toggleLayer('bufferAll')">
-            <span>Buffer • Gabungan</span>
-          </label>
-        </div>
-
       </div>
 
       <div id="viewAnalysis" style="display:none">
@@ -709,9 +687,9 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
 
-<!-- JS utama -->
+<!-- Heatmap plugin -->
+<script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
 <script src="js/map.js"></script>
 </body>
 </html>
-
-
