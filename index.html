@@ -11,7 +11,7 @@
 
   <style>
     :root{
-      --primary-theme:#FB8C00;
+      --primary-theme:#FB8C00;     /* ORANYE */
       --primary-dark:#EF6C00;
       --header-height:60px;
       --panel-width:360px;
@@ -24,6 +24,7 @@
       overflow:hidden; background:var(--bg-light);
     }
 
+    /* HEADER */
     .app-header{
       height:var(--header-height);
       background-color:var(--primary-theme);
@@ -37,8 +38,8 @@
     .logo-box{
       background:white;
       color:var(--primary-theme);
-      padding:5px 12px;
-      border-radius:6px;
+      padding:6px 12px;
+      border-radius:8px;
       font-weight:800;
       font-size:16px;
       margin-right:15px;
@@ -59,10 +60,11 @@
     }
     .nav-btn:hover{ background:rgba(255,255,255,0.15); }
     .nav-btn.active{
-      background:rgba(0,0,0,0.25);
+      background:rgba(0,0,0,0.22);
       box-shadow:inset 0 2px 4px rgba(0,0,0,0.1);
     }
 
+    /* CONTAINER */
     .main-container{
       position:relative;
       height:calc(100vh - var(--header-height));
@@ -82,8 +84,8 @@
       transform:translate(-50%,-50%);
       background:white;
       color:#333;
-      padding:25px;
-      border-radius:8px;
+      padding:22px 24px;
+      border-radius:10px;
       z-index:3000;
       display:none;
       box-shadow:0 10px 30px rgba(0,0,0,0.3);
@@ -93,6 +95,7 @@
       line-height: 1.4;
     }
 
+    /* SIDEBAR */
     .right-sidebar{
       width:var(--panel-width);
       background:white;
@@ -106,7 +109,7 @@
       background:var(--primary-theme);
       color:white;
       padding:18px 20px;
-      font-weight:500;
+      font-weight:600;
       font-size:16px;
       display:flex;
       justify-content:space-between;
@@ -124,7 +127,7 @@
       background:#fff3e0;
       padding:12px 20px;
       font-size:12px;
-      font-weight:700;
+      font-weight:800;
       color:var(--primary-dark);
       text-transform:uppercase;
       letter-spacing:0.5px;
@@ -155,6 +158,7 @@
       cursor:pointer;
     }
 
+    /* ANALYSIS */
     .analysis-card{
       background:white;
       padding:20px;
@@ -164,22 +168,22 @@
       width:100%;
       padding:12px;
       border:none;
-      border-radius:8px;
+      border-radius:10px;
       color:white;
       cursor:pointer;
-      font-weight:500;
+      font-weight:600;
       display:flex;
       align-items:center;
       justify-content:center;
       gap:10px;
       transition:0.2s;
       font-size:14px;
-      box-shadow:0 2px 5px rgba(0,0,0,0.1);
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
     }
     .analysis-btn:active{ transform:translateY(1px); box-shadow:none; }
-    .btn-green{ background:#43A047; } .btn-green:hover{ background:#2E7D32; }
-    .btn-orange{ background:#FB8C00; } .btn-orange:hover{ background:#EF6C00; }
     .btn-blue{ background:#1E88E5; } .btn-blue:hover{ background:#1565C0; }
+    .btn-orange{ background:#FB8C00; } .btn-orange:hover{ background:#EF6C00; }
+    .btn-green{ background:#43A047; } .btn-green:hover{ background:#2E7D32; }
     .analysis-desc{
       font-size:13px;
       color:#666;
@@ -193,10 +197,10 @@
       padding:15px;
       background:#fff3e0;
       border:1px solid #ffe0b2;
-      border-radius:8px;
+      border-radius:10px;
       font-size:13px;
       line-height:1.5;
-      color:var(--primary-dark);
+      color:#6d4c41;
       animation:fadeIn 0.3s;
     }
     .stats-table{
@@ -213,6 +217,7 @@
       text-align:left;
       position:sticky;
       top:0;
+      z-index:1;
     }
     .stats-table td{
       border-bottom:1px solid #eee;
@@ -221,6 +226,7 @@
     }
     .stats-table tr:hover td{ background:#fafafa; cursor:pointer; }
 
+    /* FLOATING LEFT */
     .floating-left{
       position:absolute;
       top:20px;
@@ -232,7 +238,7 @@
     }
     .search-container{
       background:white;
-      border-radius:8px;
+      border-radius:10px;
       box-shadow:0 4px 12px rgba(0,0,0,0.15);
       display:flex;
       width:340px;
@@ -271,7 +277,7 @@
       background:white;
       color:#555;
       border:1px solid #ccc;
-      border-radius:8px;
+      border-radius:10px;
       cursor:pointer;
       display:flex;
       align-items:center;
@@ -296,7 +302,7 @@
       top:52px;
       left:0;
       background:white;
-      border-radius:8px;
+      border-radius:10px;
       box-shadow:0 5px 20px rgba(0,0,0,0.2);
       width:180px;
       display:none;
@@ -320,6 +326,7 @@
       color:var(--primary-theme);
     }
 
+    /* MODALS */
     .modal-overlay{
       position:fixed;
       top:0; left:0;
@@ -335,7 +342,7 @@
       background:white;
       width:520px;
       max-width:90%;
-      border-radius:10px;
+      border-radius:12px;
       box-shadow:0 20px 40px rgba(0,0,0,0.3);
       overflow:hidden;
       animation:slideDown 0.3s;
@@ -347,7 +354,7 @@
       display:flex;
       justify-content:space-between;
       align-items:center;
-      font-weight:500;
+      font-weight:600;
       font-size:18px;
     }
     .modal-body{
@@ -367,18 +374,18 @@
       color:white;
       border:none;
       padding:10px 24px;
-      border-radius:6px;
+      border-radius:8px;
       cursor:pointer;
       font-size:14px;
-      font-weight:500;
+      font-weight:600;
     }
     .form-group{ margin-bottom:15px; text-align:left; }
-    .form-group label{ display:block; font-weight:500; margin-bottom:5px; color:#333; }
+    .form-group label{ display:block; font-weight:600; margin-bottom:5px; color:#333; }
     .form-control{
       width:100%;
       padding:10px;
       border:1px solid #ccc;
-      border-radius:6px;
+      border-radius:8px;
       font-family:inherit;
       font-size:14px;
       box-sizing:border-box;
@@ -388,19 +395,20 @@
       color:white;
       border:none;
       padding:10px 24px;
-      border-radius:6px;
+      border-radius:8px;
       cursor:pointer;
       font-size:14px;
-      font-weight:500;
+      font-weight:700;
       display:inline-flex;
       align-items:center;
       gap:8px;
     }
 
+    /* COORD */
     .leaflet-control-coordinates{
       background:rgba(255,255,255,0.95);
       padding:6px 12px;
-      border-radius:6px;
+      border-radius:8px;
       box-shadow:0 2px 6px rgba(0,0,0,0.1);
       font-size:11px;
       font-family:monospace;
@@ -410,43 +418,48 @@
       margin-bottom:5px;
     }
 
-    .distance-label{
-      background:white;
-      border:1px solid var(--primary-theme);
-      color:var(--primary-theme);
-      font-weight:bold;
-      padding:2px 6px;
-      border-radius:4px;
-      font-size:11px;
-      box-shadow:0 1px 3px rgba(0,0,0,0.2);
-      white-space:nowrap;
-    }
+    /* LABELS */
     .kec-label{
-      background:rgba(255,255,255,0.9);
-      border:1px solid #666;
+      background:rgba(255,255,255,0.95);
+      border:1px solid rgba(0,0,0,0.35);
       color:#333;
-      padding:1px 5px;
-      border-radius:3px;
+      padding:2px 6px;
+      border-radius:6px;
       font-size:11px;
-      font-weight:700;
+      font-weight:800;
       white-space:nowrap;
+      box-shadow:0 1px 3px rgba(0,0,0,0.15);
+    }
+    .pop-label{
+      background:rgba(255,255,255,0.95);
+      border:1px solid rgba(0,0,0,0.35);
+      color:#5d4037;
+      padding:2px 6px;
+      border-radius:6px;
+      font-size:11px;
+      font-weight:800;
+      white-space:nowrap;
+      box-shadow:0 1px 3px rgba(0,0,0,0.15);
     }
 
+    /* LEGEND */
     .legend-box{
-      background:rgba(255,255,255,0.95);
+      background:rgba(255,255,255,0.97);
       padding:10px 12px;
-      border-radius:8px;
+      border-radius:12px;
       border:1px solid #ddd;
-      box-shadow:0 2px 8px rgba(0,0,0,0.12);
+      box-shadow:0 2px 10px rgba(0,0,0,0.12);
       font-size:12px;
       line-height:1.2;
+      min-width: 220px;
     }
     .leg-row{ display:flex; align-items:center; gap:8px; margin:6px 0; }
-    .leg-swatch{ width:14px; height:14px; border-radius:3px; border:1px solid rgba(0,0,0,0.2); }
+    .leg-swatch{ width:14px; height:14px; border-radius:4px; border:1px solid rgba(0,0,0,0.2); }
 
     @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
     @keyframes slideDown{ from{transform:translateY(-30px);opacity:0} to{transform:translateY(0);opacity:1} }
 
+    /* PRINT */
     @media print{
       @page{ margin:0; }
       body{ background:white; -webkit-print-color-adjust:exact; }
@@ -466,7 +479,7 @@
 <header class="app-header">
   <div style="display:flex;align-items:center">
     <div class="logo-box">BPS-PI</div>
-    <span style="font-weight:700; font-size:18px">WebGIS Kepadatan Penduduk</span>
+    <span style="font-weight:800; font-size:18px">WebGIS Kepadatan Penduduk</span>
   </div>
   <div style="display:flex; align-items:center">
     <button class="nav-btn active" id="navLayer" title="Layer" onclick="switchPanel('layer')"><i class="fa-solid fa-layer-group"></i></button>
@@ -481,7 +494,7 @@
 
   <div id="loading" class="loading-modal">
     <i class="fa-solid fa-circle-notch fa-spin" style="margin-right:10px;color:var(--primary-theme)"></i>
-    Memuat Data & Peta...
+    <span id="loadingText">Memuat Data & Peta...</span>
   </div>
 
   <!-- INFO MODAL -->
@@ -493,12 +506,11 @@
       </div>
       <div class="modal-body">
         <h3 style="margin-top:0; color:var(--primary-theme); font-size:16px;">WebGIS Kepadatan Penduduk</h3>
-        <p>Aplikasi ini menampilkan choropleth dan heatmap kepadatan penduduk per kecamatan (jiwa/km²).</p>
+        <p>Aplikasi ini menampilkan choropleth kepadatan penduduk per kecamatan (jiwa/km²) untuk Kota Bandung dan Kabupaten Bandung.</p>
         <ul style="padding-left:20px; color:#555">
-          <li>Administrasi: Kota Bandung & Kabupaten Bandung.</li>
-          <li>Choropleth kepadatan.</li>
+          <li>Field penduduk otomatis dibaca dari: <b>Jumlah</b> / Penduduk / JUMLAH (fallback).</li>
+          <li>Choropleth dan label dipisah Kota vs Kabupaten.</li>
           <li>Heatmap: Kota, Kabupaten, Gabungan.</li>
-          <li>Label kecamatan & label jumlah penduduk dipisah Kota/Kabupaten.</li>
           <li>Search kecamatan, ukur jarak, print.</li>
         </ul>
       </div>
@@ -527,7 +539,7 @@
             <option value="portrait">A4 Portrait</option>
           </select>
         </div>
-        <div style="background:#fff3e0; padding:10px; border-radius:6px; font-size:12px; color:var(--primary-dark); margin-top:10px;">
+        <div style="background:#fff3e0; padding:10px; border-radius:10px; font-size:12px; color:#6d4c41; margin-top:10px;">
           <i class="fa-solid fa-circle-info"></i>
           <b>Tips:</b> Pada dialog print browser pilih <b>"Save as PDF"</b>.
         </div>
@@ -687,9 +699,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
 
-<!-- Heatmap plugin -->
+<!-- IMPORTANT: plugin heatmap -->
 <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
+<!-- JS utama -->
 <script src="js/map.js"></script>
 </body>
 </html>
