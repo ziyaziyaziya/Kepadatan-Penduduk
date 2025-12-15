@@ -1,31 +1,26 @@
 /* global L, turf */
 
 (function () {
-  // =========================
-  // CONFIG
-  // =========================
   const HOME = { lat: -6.914744, lng: 107.60981, zoom: 11 };
 
-  // NAMA FILE HARUS PERSIS SAMA (case-sensitive di GitHub Pages)
+  // PATH + NAMA FILE HARUS PERSIS (case-sensitive di GitHub Pages)
   const PATH_KOTA = "Geojson/Kota_Kecamatan.GeoJSON";
   const PATH_KAB  = "Geojson/Kabupaten_Kecamatan.GeoJSON";
 
-  // Field properti
-  const FIELD_KEC = "WADMKC";   // nama kecamatan
-  const FIELD_POP = "Jumlah";   // jumlah penduduk (format Indonesia: 72.067)
-  const FIELD_WIL = "WADMKK";   // nama kab/kota (opsional)
+  // FIELD
+  const FIELD_KEC = "WADMKC";
+  const FIELD_POP = "Jumlah";
+  const FIELD_WIL = "WADMKK"; // opsional
 
   // =========================
-  // INIT MAP
+  // MAP
   // =========================
   const map = L.map("map", { zoomControl: false, doubleClickZoom: true }).setView([HOME.lat, HOME.lng], HOME.zoom);
 
-  // Basemaps
   const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19 }).addTo(map);
   const sat = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 });
   const topo = L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", { maxZoom: 17 });
 
-  // Scale
   L.control.scale({ position: "bottomright", metric: true, imperial: false }).addTo(map);
 
   // Coord box
@@ -44,11 +39,6 @@
   map.addControl(coordBox);
   map.on("mousemove", (e) => coordBox.update(e.latlng.lat, e.latlng.lng));
 
-  // Tool group for measure
-  const toolGroup = L.layerGroup().addTo(map);
-  let activeTool = null;
-  let measurePts = [];
-
   // =========================
   // LAYERS
   // =========================
@@ -57,6 +47,7 @@
 
   const choroKota = L.layerGroup();
   const choroKab  = L.layerGroup();
+  const choroAll  = L.layerGroup();
 
   const labelKecKota = L.layerGroup();
   const labelKecKab  = L.layerGroup();
@@ -68,14 +59,16 @@
   let heatKab  = null;
   let heatAll  = null;
 
-  // legend control
   const legend = L.control({ position: "bottomleft" });
 
-  // Data store
+  // Measure tool
+  const toolGroup = L.layerGroup().addTo(map);
+  let activeTool = null;
+  let measurePts = [];
+
+  // Data
   let kotaGeo = null;
   let kabGeo = null;
-
-  // Statistik gabungan
   let allFeatures = [];
 
   // =========================
@@ -97,16 +90,15 @@
     return await res.json();
   }
 
-  // parsing angka Indonesia: "72.067" -> 72067, "1.234.567" -> 1234567
+  // parsing "72.067" -> 72067
   function parseIndoNumber(v) {
     if (v === null || v === undefined) return 0;
     if (typeof v === "number") return Number.isFinite(v) ? v : 0;
     let s = String(v).trim();
     if (!s) return 0;
     s = s.replace(/\s/g, "");
-    // jika ada koma desimal, ubah jadi titik (jarang untuk penduduk, tapi aman)
-    s = s.replace(/\./g, "");     // hapus titik ribuan
-    s = s.replace(/,/g, ".");     // koma -> titik
+    s = s.replace(/\./g, "");   // hapus ribuan
+    s = s.replace(/,/g, ".");   // koma -> titik
     const n = Number(s);
     return Number.isFinite(n) ? n : 0;
   }
@@ -120,32 +112,120 @@
     return props?.[FIELD_KEC] || props?.nama || props?.NAME || "(Tanpa Nama)";
   }
 
+  // ======= AREA FIX (UTM planar) =======
+  function isProjectedMetersGeometry(feature) {
+    // jika nilai koordinat jauh > 180, kemungkinan besar UTM (meter)
+    const g = feature?.geometry;
+    if (!g) return false;
+
+    const sample = [];
+    const pushSome = (coords) => {
+      for (const c of coords) {
+        if (Array.isArray(c) && typeof c[0] === "number" && typeof c[1] === "number") {
+          sample.push(c);
+          if (sample.length >= 20) break;
+        }
+      }
+    };
+
+    const walk = (coords) => {
+      if (!Array.isArray(coords)) return;
+      if (typeof coords[0] === "number") {
+        sample.push(coords);
+        return;
+      }
+      for (const part of coords) {
+        if (sample.length >= 20) break;
+        walk(part);
+      }
+    };
+
+    walk(g.coordinates);
+    if (!sample.length) return false;
+
+    // jika banyak x/y > 180 atau < -180 => projected
+    let projectedCount = 0;
+    for (const [x, y] of sample) {
+      if (Math.abs(x) > 180 || Math.abs(y) > 90) projectedCount++;
+    }
+    return projectedCount >= Math.ceil(sample.length * 0.6);
+  }
+
+  function ringAreaShoelace(ring) {
+    // ring: [[x,y],[x,y],...]
+    if (!ring || ring.length < 3) return 0;
+    let sum = 0;
+    for (let i = 0; i < ring.length - 1; i++) {
+      const [x1, y1] = ring[i];
+      const [x2, y2] = ring[i + 1];
+      sum += (x1 * y2 - x2 * y1);
+    }
+    return Math.abs(sum) / 2;
+  }
+
+  function planarAreaMeters2(feature) {
+    const g = feature.geometry;
+    if (!g) return 0;
+
+    const polyArea = (polyCoords) => {
+      // polyCoords: [outerRing, hole1, hole2...]
+      if (!polyCoords || !polyCoords.length) return 0;
+      let a = ringAreaShoelace(polyCoords[0]);
+      for (let i = 1; i < polyCoords.length; i++) a -= ringAreaShoelace(polyCoords[i]);
+      return Math.max(0, a);
+    };
+
+    if (g.type === "Polygon") return polyArea(g.coordinates);
+    if (g.type === "MultiPolygon") {
+      let total = 0;
+      for (const poly of g.coordinates) total += polyArea(poly);
+      return total;
+    }
+    return 0;
+  }
+
+  function computeAreaKm2(feature) {
+    // coba turf dulu (untuk WGS84)
+    let areaM2 = 0;
+    try { areaM2 = turf.area(feature); } catch { areaM2 = 0; }
+
+    if (!Number.isFinite(areaM2) || areaM2 <= 0) {
+      // fallback planar
+      areaM2 = planarAreaMeters2(feature);
+    } else {
+      // jika ternyata projected, turf.area bisa ngawur -> pakai planar
+      if (isProjectedMetersGeometry(feature)) {
+        const planar = planarAreaMeters2(feature);
+        if (planar > 0) areaM2 = planar;
+      }
+    }
+
+    return areaM2 / 1e6;
+  }
+
   function computeDerivedProps(feature) {
     const pop = parseIndoNumber(feature.properties?.[FIELD_POP]);
-    const areaM2 = turf.area(feature);
-    const areaKm2 = areaM2 / 1e6;
+    const areaKm2 = computeAreaKm2(feature);
     const dens = areaKm2 > 0 ? (pop / areaKm2) : 0;
 
     feature.properties.__pop = pop;
     feature.properties.__areaKm2 = areaKm2;
     feature.properties.__dens = dens;
-
     return feature;
   }
 
   function densColor(d, minD, maxD) {
-    // merah (padat) -> biru (rendah)
-    // t = 0 (min) => biru, t = 1 (max) => merah
+    // biru (min) -> merah (max)
     const t = (maxD > minD) ? (d - minD) / (maxD - minD) : 0;
     const clamp = (x) => Math.max(0, Math.min(1, x));
     const tt = clamp(t);
 
-    // interpolate RGB: blue(33,150,243) -> red(244,67,54)
-    const b = { r: 33,  g: 150, b: 243 };
-    const r = { r: 244, g: 67,  b: 54  };
-    const R = Math.round(b.r + (r.r - b.r) * tt);
-    const G = Math.round(b.g + (r.g - b.g) * tt);
-    const B = Math.round(b.b + (r.b - b.b) * tt);
+    const blue = { r: 33,  g: 150, b: 243 };
+    const red  = { r: 244, g: 67,  b: 54  };
+
+    const R = Math.round(blue.r + (red.r - blue.r) * tt);
+    const G = Math.round(blue.g + (red.g - blue.g) * tt);
+    const B = Math.round(blue.b + (red.b - blue.b) * tt);
     return `rgb(${R},${G},${B})`;
   }
 
@@ -178,11 +258,11 @@
     const pop = p.__pop ?? 0;
     const area = p.__areaKm2 ?? 0;
     const dens = p.__dens ?? 0;
-
     const wilayah = wilayahLabel || p[FIELD_WIL] || "";
+
     return `
       <div style="font-weight:900;font-size:15px;margin-bottom:6px;color:#4e2a00">${nama}</div>
-      <div style="display:inline-block;background:#fb8c00;color:#fff;padding:3px 8px;border-radius:999px;font-weight:800;font-size:11px;margin-bottom:10px;">
+      <div style="display:inline-block;background:#fb8c00;color:#fff;padding:3px 9px;border-radius:999px;font-weight:900;font-size:11px;margin-bottom:10px;">
         ${wilayah}
       </div>
       <div style="line-height:1.55">
@@ -212,7 +292,7 @@
     grpPop.clearLayers();
 
     geo.features.forEach((f) => {
-      const c = turf.centroid(f).geometry.coordinates; // [lng, lat]
+      const c = turf.centroid(f).geometry.coordinates; // centroid tetap ok untuk polygon UTM/WGS
       const latlng = [c[1], c[0]];
       const nm = getName(f.properties);
       const pop = f.properties.__pop ?? 0;
@@ -223,45 +303,19 @@
   }
 
   function buildHeat(geo, weightField = "__dens") {
-    // titik = centroid, weight = dens (dinormalisasi)
     const pts = geo.features.map((f) => {
       const c = turf.centroid(f).geometry.coordinates;
       const w = Number(f.properties?.[weightField]) || 0;
       return { lat: c[1], lng: c[0], w };
     });
     const maxW = Math.max(...pts.map(p => p.w), 1);
-    // leaflet-heat: [lat,lng,intensity] intensity 0..1 (atau boleh >1 tapi mending dinormalisasi)
     const heatData = pts.map(p => [p.lat, p.lng, p.w / maxW]);
+
     return L.heatLayer(heatData, {
       radius: 28,
       blur: 22,
       maxZoom: 13
     });
-  }
-
-  function buildChoropleth(geo, isKota, minD, maxD) {
-    const target = isKota ? choroKota : choroKab;
-    target.clearLayers();
-
-    L.geoJSON(geo, {
-      style: (feature) => {
-        const d = feature.properties.__dens || 0;
-        return {
-          color: "#7a3b00",
-          weight: 1.3,
-          fillOpacity: 0.55,
-          fillColor: densColor(d, minD, maxD)
-        };
-      },
-      onEachFeature: (feature, layer) => {
-        layer.on("click", () => {
-          const b = layer.getBounds();
-          map.fitBounds(b, { padding: [20, 20] });
-        });
-        const wilayahLabel = isKota ? "Kota Bandung" : "Kabupaten Bandung";
-        layer.bindPopup(popupHTML(feature, wilayahLabel));
-      }
-    }).addTo(target);
   }
 
   function buildAdminOutline(geo, isKota) {
@@ -278,6 +332,25 @@
     }).addTo(target);
   }
 
+  function buildChoropleth(geo, targetGroup, labelWil, minD, maxD) {
+    targetGroup.clearLayers();
+    L.geoJSON(geo, {
+      style: (feature) => {
+        const d = feature.properties.__dens || 0;
+        return {
+          color: "#6b3a00",
+          weight: 1.3,
+          fillOpacity: 0.55,
+          fillColor: densColor(d, minD, maxD)
+        };
+      },
+      onEachFeature: (feature, layer) => {
+        layer.on("click", () => map.fitBounds(layer.getBounds(), { padding: [20, 20] }));
+        layer.bindPopup(popupHTML(feature, labelWil));
+      }
+    }).addTo(targetGroup);
+  }
+
   function ensureLayer(layer, checked) {
     if (!layer) return;
     if (checked) map.addLayer(layer);
@@ -285,11 +358,14 @@
   }
 
   function applyInitialLayerState() {
+    // ADMIN ON
     ensureLayer(adminKota, document.getElementById("chkAdminKota")?.checked);
     ensureLayer(adminKab,  document.getElementById("chkAdminKab")?.checked);
 
+    // Kepadatan default OFF (checkbox di HTML memang default unchecked)
     ensureLayer(choroKota, document.getElementById("chkChoroKota")?.checked);
     ensureLayer(choroKab,  document.getElementById("chkChoroKab")?.checked);
+    ensureLayer(choroAll,  document.getElementById("chkChoroAll")?.checked);
 
     ensureLayer(labelKecKota, document.getElementById("chkLabelKecKota")?.checked);
     ensureLayer(labelKecKab,  document.getElementById("chkLabelKecKab")?.checked);
@@ -303,7 +379,7 @@
   }
 
   // =========================
-  // LOAD + BUILD
+  // INIT
   // =========================
   async function init() {
     showLoading("Memuat GeoJSON…");
@@ -315,17 +391,15 @@
       console.error(err);
       showLoading(
         "Gagal memuat GeoJSON.\n\n" +
-        "Pastikan:\n" +
+        "Pastikan file ada & nama sama persis (huruf besar-kecil):\n" +
         `- ${PATH_KOTA}\n` +
         `- ${PATH_KAB}\n\n` +
-        "Catatan: GitHub Pages case-sensitive (huruf besar-kecil harus sama)."
+        "Catatan: GitHub Pages case-sensitive."
       );
       return;
     }
 
-    showLoading("Menghitung luas (km²) & kepadatan…");
-
-    // compute derived props
+    showLoading("Menghitung penduduk, luas (km²), kepadatan…");
     kotaGeo.features = kotaGeo.features.map(computeDerivedProps);
     kabGeo.features  = kabGeo.features.map(computeDerivedProps);
 
@@ -335,36 +409,31 @@
     const minD = Math.min(...densVals);
     const maxD = Math.max(...densVals);
 
-    // Build layers
-    showLoading("Membangun choropleth, label, heatmap…");
+    showLoading("Membangun layer…");
 
     buildAdminOutline(kotaGeo, true);
     buildAdminOutline(kabGeo,  false);
 
-    buildChoropleth(kotaGeo, true,  minD, maxD);
-    buildChoropleth(kabGeo,  false, minD, maxD);
+    // choropleth 3 varian
+    buildChoropleth(kotaGeo, choroKota, "Kota Bandung", minD, maxD);
+    buildChoropleth(kabGeo,  choroKab,  "Kabupaten Bandung", minD, maxD);
+
+    const merged = { type: "FeatureCollection", features: [...kotaGeo.features, ...kabGeo.features] };
+    buildChoropleth(merged, choroAll, "Gabungan Bandung", minD, maxD);
 
     buildLabelsFor(kotaGeo, true);
     buildLabelsFor(kabGeo,  false);
 
-    // Heatmaps (berdasarkan dens)
     heatKota = buildHeat(kotaGeo, "__dens");
-    heatKab  = buildHeat(kabGeo,  "__dens");
+    heatKab  = buildHeat(kabGeo, "__dens");
+    heatAll  = buildHeat(merged, "__dens");
 
-    // Gabungan: merge centroid lists (pakai dens gabungan)
-    const merged = {
-      type: "FeatureCollection",
-      features: [...kotaGeo.features, ...kabGeo.features]
-    };
-    heatAll = buildHeat(merged, "__dens");
-
-    // Legend
     addLegend(minD, maxD);
 
-    // Default layer states
+    // default ON hanya administrasi (checkbox lain OFF)
     applyInitialLayerState();
 
-    // Fit bounds gabungan
+    // fit bounds gabungan
     const b1 = L.geoJSON(kotaGeo).getBounds();
     const b2 = L.geoJSON(kabGeo).getBounds();
     map.fitBounds(b1.extend(b2), { padding: [20, 20] });
@@ -375,7 +444,7 @@
   init();
 
   // =========================
-  // UI FUNCTIONS (dipanggil dari HTML)
+  // UI FUNCTIONS
   // =========================
   window.toggleInfoModal = function () {
     const m = document.getElementById("infoModal");
@@ -390,7 +459,6 @@
   window.executePrint = function () {
     const title = document.getElementById("inputPrintTitle")?.value || "Peta Kepadatan Penduduk";
     const layout = document.getElementById("inputPrintLayout")?.value || "landscape";
-    // Title only for browser print header (simple)
     document.title = title;
 
     window.togglePrintModal();
@@ -476,7 +544,6 @@
       .openOn(map);
   };
 
-  // Toggle layer by key
   window.toggleLayer = function (key) {
     const on = (id) => document.getElementById(id)?.checked;
 
@@ -485,6 +552,7 @@
 
     if (key === "choroKota") ensureLayer(choroKota, on("chkChoroKota"));
     if (key === "choroKab")  ensureLayer(choroKab,  on("chkChoroKab"));
+    if (key === "choroAll")  ensureLayer(choroAll,  on("chkChoroAll"));
 
     if (key === "labelKecKota") ensureLayer(labelKecKota, on("chkLabelKecKota"));
     if (key === "labelKecKab")  ensureLayer(labelKecKab,  on("chkLabelKecKab"));
@@ -526,7 +594,7 @@
       const pop = p.__pop || 0;
       const area = p.__areaKm2 || 0;
       const dens = p.__dens || 0;
-      const wilayah = (kotaGeo?.features?.includes(f)) ? "Kota" : "Kabupaten"; // fallback
+      const wilayah = (kotaGeo?.features?.includes(f)) ? "Kota" : "Kabupaten";
       return { f, wilayah, nm, pop, area, dens };
     });
 
@@ -555,7 +623,6 @@
     html += `</table></div>`;
     res.innerHTML = html;
 
-    // klik baris -> zoom ke feature
     res.querySelectorAll("tr[data-idx]").forEach((tr) => {
       tr.addEventListener("click", () => {
         const idx = Number(tr.getAttribute("data-idx"));
@@ -579,7 +646,7 @@
     }
 
     const rows = allFeatures
-      .map(f => ({ f, nm: getName(f.properties), dens: f.properties.__dens || 0, pop: f.properties.__pop || 0 }))
+      .map(f => ({ nm: getName(f.properties), dens: f.properties.__dens || 0, pop: f.properties.__pop || 0 }))
       .sort((a, b) => b.dens - a.dens)
       .slice(0, 10);
 
@@ -587,7 +654,7 @@
     rows.forEach(r => {
       html += `<li style="margin:6px 0;"><b>${r.nm}</b> — ${formatID(r.dens)} jiwa/km² <span style="color:#777">(pop ${formatID(r.pop)})</span></li>`;
     });
-    html += "</ol><div style='margin-top:10px;color:#777;font-size:12px;'>Klik “Statistik per Kecamatan” untuk zoom via tabel.</div>";
+    html += "</ol>";
     res.innerHTML = html;
   };
 
